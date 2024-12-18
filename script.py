@@ -12,6 +12,7 @@ import time
 # Specify download directory
 download_dir = "C:\\temp"
 os.makedirs(download_dir, exist_ok=True)
+
 # Initialize WebDriver with headless settings (no local download)
 options = webdriver.ChromeOptions()
 options.add_argument("--headless")  # Run headless to avoid GUI
@@ -92,7 +93,8 @@ except Exception as e:
     print("Failed to click the download button:", e)
 
 # Wait time to allow the file to download
-time.sleep(20)
+print("Waiting for file download...")
+time.sleep(40)  # Increased time to allow more time for download
 
 # Check the downloaded file type
 downloaded_files = [os.path.join(download_dir, f) for f in os.listdir(download_dir) if os.path.isfile(os.path.join(download_dir, f))]
