@@ -94,10 +94,12 @@ except Exception as e:
 
 # Wait time to allow the file to download
 print("Waiting for file download...")
-time.sleep(40)  # Increased time to allow more time for download
+time.sleep(60)  # Increased time to allow more time for download
 
 # Check the downloaded file type
 downloaded_files = [os.path.join(download_dir, f) for f in os.listdir(download_dir) if os.path.isfile(os.path.join(download_dir, f))]
+print(f"Files in download directory: {downloaded_files}")  # Debugging: List files in download dir
+
 if downloaded_files:
     latest_file = max(downloaded_files, key=os.path.getctime)
     print(f"File downloaded: {latest_file}")
