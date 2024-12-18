@@ -23,15 +23,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install pandas boto3 selenium
 
-    - name: Install Firefox and Geckodriver
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y firefox
-        sudo apt-get install -y wget
-        wget https://github.com/mozilla/geckodriver/releases/download/v0.30.0/geckodriver-v0.30.0-linux64.tar.gz
-        tar -xvzf geckodriver-v0.30.0-linux64.tar.gz
-        sudo mv geckodriver /usr/local/bin/
-
     - name: Run Script
       run: |
         python script.py
