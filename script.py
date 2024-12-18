@@ -10,7 +10,7 @@ from selenium.webdriver.support import expected_conditions as EC
 import time
 
 # Specify download directory
-download_dir = "C:\\temp"
+download_dir = "/tmp"  # Use a standard directory for cloud-based environments
 os.makedirs(download_dir, exist_ok=True)
 
 # Initialize WebDriver with headless settings (no local download)
@@ -92,14 +92,11 @@ try:
 except Exception as e:
     print("Failed to click the download button:", e)
 
-# Wait time to allow the file to download
-print("Waiting for file download...")
-time.sleep(60)  # Increased time to allow more time for download
+# Wait for file to download (20 seconds)
+time.sleep(20)
 
 # Check the downloaded file type
 downloaded_files = [os.path.join(download_dir, f) for f in os.listdir(download_dir) if os.path.isfile(os.path.join(download_dir, f))]
-print(f"Files in download directory: {downloaded_files}")  # Debugging: List files in download dir
-
 if downloaded_files:
     latest_file = max(downloaded_files, key=os.path.getctime)
     print(f"File downloaded: {latest_file}")
