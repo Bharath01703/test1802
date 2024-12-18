@@ -4,11 +4,13 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 import time
 
-# Read credentials from environment variables
+# Bizom credentials hardcoded (as per the provided values)
+BIZOM_USERNAME = "6361219727"
+BIZOM_PASSWORD = "Swastiks#2024"
+
+# AWS credentials read from environment variables
 AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
-BIZOM_USERNAME = os.getenv('BIZOM_USERNAME')
-BIZOM_PASSWORD = os.getenv('BIZOM_PASSWORD')
 
 # Check if AWS credentials are set
 if not AWS_ACCESS_KEY_ID or not AWS_SECRET_ACCESS_KEY:
@@ -18,13 +20,13 @@ else:
 
 # Check if Bizom credentials are set
 if not BIZOM_USERNAME or not BIZOM_PASSWORD:
-    print("Bizom credentials are not set in environment variables.")
+    print("Bizom credentials are not set in the script.")
 else:
     print("Bizom credentials are set.")
 
 # Logic for Bizom login using Selenium (example)
 if not BIZOM_USERNAME or not BIZOM_PASSWORD:
-    raise ValueError("Bizom credentials not set in environment variables.")
+    raise ValueError("Bizom credentials not set in the script.")
 
 # Initialize the webdriver for Bizom login (using Chrome in this example)
 options = webdriver.ChromeOptions()
