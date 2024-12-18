@@ -32,5 +32,6 @@ jobs:
         tar -xvzf geckodriver-v0.30.0-linux64.tar.gz
         sudo mv geckodriver /usr/local/bin/
 
+    - name: Run Script
       run: |
         python script.py
