@@ -23,9 +23,14 @@ jobs:
         python -m pip install --upgrade pip
         pip install pandas boto3 selenium
 
-    - name: Run Script
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    - name: Install Firefox and Geckodriver
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y firefox
+        sudo apt-get install -y wget
+        wget https://github.com/mozilla/geckodriver/releases/download/v0.30.0/geckodriver-v0.30.0-linux64.tar.gz
+        tar -xvzf geckodriver-v0.30.0-linux64.tar.gz
+        sudo mv geckodriver /usr/local/bin/
+
       run: |
         python script.py
