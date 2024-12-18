@@ -4,13 +4,11 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 import time
 
-# Bizom credentials hardcoded (as per the provided values)
+# Read credentials from environment variables
+AWS_ACCESS_KEY_ID = 'AKIAZ3MGNBTBUTZ4UNEJ'
+AWS_SECRET_ACCESS_KEY = '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'
 BIZOM_USERNAME = "6361219727"
 BIZOM_PASSWORD = "Swastiks#2024"
-
-# AWS credentials read from environment variables
-AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
 
 # Check if AWS credentials are set
 if not AWS_ACCESS_KEY_ID or not AWS_SECRET_ACCESS_KEY:
@@ -20,20 +18,23 @@ else:
 
 # Check if Bizom credentials are set
 if not BIZOM_USERNAME or not BIZOM_PASSWORD:
-    print("Bizom credentials are not set in the script.")
+    print("Bizom credentials are not set in environment variables.")
 else:
     print("Bizom credentials are set.")
 
 # Logic for Bizom login using Selenium (example)
 if not BIZOM_USERNAME or not BIZOM_PASSWORD:
-    raise ValueError("Bizom credentials not set in the script.")
+    raise ValueError("Bizom credentials not set in environment variables.")
 
-# Initialize the webdriver for Bizom login (using Chrome in this example)
-options = webdriver.ChromeOptions()
-options.add_argument("--headless")  # Run Chrome in headless mode (no UI)
-driver = webdriver.Chrome(options=options)
+# Set up Firefox options
+options = webdriver.FirefoxOptions()
+options.add_argument("--headless")  # Run in headless mode
+
+# Initialize the Firefox driver
+driver = webdriver.Firefox(options=options)
 
 # Navigate to Bizom login page
+print("Navigating to Bizom login page...")
 driver.get("https://app.bizom.com/login")
 
 # Locate the username and password fields and input credentials
@@ -48,9 +49,9 @@ login_button = driver.find_element(By.XPATH, "//button[@type='submit']")
 login_button.click()
 
 # Wait for the page to load after login
-time.sleep(5)  # Adjust if necessary
+time.sleep(5)
 
-# Check if login was successful (replace with actual check)
+# Check if login was successful
 if "dashboard" in driver.current_url:
     print("Successfully logged in to Bizom!")
 else:
