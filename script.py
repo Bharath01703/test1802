@@ -94,7 +94,7 @@ except Exception as e:
     print("Failed to click the download button:", e)
 
 # Wait time to allow the file to download
-time.sleep(60)
+time.sleep(40)
 
 # Detect and convert file to CSV
 def convert_to_csv(file_path):
@@ -112,7 +112,7 @@ def convert_to_csv(file_path):
     except Exception as e:
         print(f"Failed to convert file to CSV: {e}")
         return None
-
+time.sleep(30)
 # Get the latest downloaded file
 downloaded_files = [os.path.join(download_dir, f) for f in os.listdir(download_dir) if os.path.isfile(os.path.join(download_dir, f))]
 if downloaded_files:
