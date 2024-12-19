@@ -10,8 +10,9 @@ from selenium.webdriver.support import expected_conditions as EC
 import time
 
 # Specify download directory
-download_dir = "C:\\temp"
+download_dir = "/tmp"  # Use a standard directory for cloud-based environments
 os.makedirs(download_dir, exist_ok=True)
+
 # Initialize WebDriver with headless settings (no local download)
 options = webdriver.ChromeOptions()
 options.add_argument("--headless")  # Run headless to avoid GUI
@@ -91,7 +92,7 @@ try:
 except Exception as e:
     print("Failed to click the download button:", e)
 
-# Wait time to allow the file to download
+# Wait for file to download (20 seconds)
 time.sleep(20)
 
 # Check the downloaded file type
@@ -144,4 +145,4 @@ if latest_file:
     s3_key = f"attendance/{os.path.basename(latest_file)}"
     upload_to_s3(latest_file, bucket_name, s3_key)
 else:
-    print("No file downloaded to upload.") 
+    print("No file downloaded to upload.")
