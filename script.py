@@ -94,7 +94,7 @@ except Exception as e:
     print("Failed to click the download button:", e)
 
 # Wait time to allow the file to download
-time.sleep(20)
+time.sleep(60)
 
 # Detect and convert file to CSV
 def convert_to_csv(file_path):
