@@ -10,7 +10,7 @@ from selenium.webdriver.support import expected_conditions as EC
 import time
 
 # Specify download directory
-download_dir = "/tmp"  # Use a standard directory for cloud-based environments
+download_dir = "C:\\temp"  # Use a standard directory for cloud-based environments
 os.makedirs(download_dir, exist_ok=True)
 
 # Initialize WebDriver with headless settings (no local download)
@@ -95,27 +95,32 @@ except Exception as e:
 # Wait for file to download (20 seconds)
 time.sleep(20)
 
-# Check the downloaded file type
+# Detect and convert file to CSV
+def convert_to_csv(file_path):
+    try:
+        if file_path.endswith((".xlsx", ".xls")):
+            df = pd.read_excel(file_path)
+        elif file_path.endswith((".txt", ".csv")):
+            df = pd.read_csv(file_path, sep=None, engine="python")
+        else:
+            raise ValueError("Unsupported file format.")
+        csv_file_path = file_path.rsplit(".", 1)[0] + ".csv"
+        df.to_csv(csv_file_path, index=False)
+        print(f"Converted to CSV: {csv_file_path}")
+        return csv_file_path
+    except Exception as e:
+        print(f"Failed to convert file to CSV: {e}")
+        return None
+
+# Get the latest downloaded file
 downloaded_files = [os.path.join(download_dir, f) for f in os.listdir(download_dir) if os.path.isfile(os.path.join(download_dir, f))]
 if downloaded_files:
     latest_file = max(downloaded_files, key=os.path.getctime)
     print(f"File downloaded: {latest_file}")
-
-    # Convert file to CSV if it is Excel file
-    if latest_file.endswith(".xlsx") or latest_file.endswith(".xls"):
-        print("Converting Excel to CSV...")
-        try:
-            df = pd.read_excel(latest_file)
-            csv_file_path = latest_file.replace('.xlsx', '.csv').replace('.xls', '.csv')
-            df.to_csv(csv_file_path, index=False)
-            print(f"Converted to CSV: {csv_file_path}")
-            latest_file = csv_file_path  # Update to the new CSV file path
-        except Exception as e:
-            print(f"Failed to convert Excel to CSV: {e}")
-    else:
-        print("File is not an Excel file. No conversion applied.")
+    latest_file = convert_to_csv(latest_file)  # Convert the file to CSV
 else:
     print("No file downloaded.")
+    latest_file = None
 
 driver.quit()
 
@@ -129,20 +134,10 @@ def upload_to_s3(file_name, bucket_name, s3_key):
     except Exception as e:
         print("Failed to upload to S3:", e)
 
-# Function to get the latest downloaded file
-def get_latest_file(directory):
-    files = [os.path.join(directory, f) for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
-    if not files:
-        return None
-    latest_file = max(files, key=os.path.getctime)
-    return latest_file
-
-# Set S3 Bucket and Key
+# Upload the converted file to S3
 bucket_name = "attendance3122024"
-latest_file = get_latest_file(download_dir)
-
 if latest_file:
     s3_key = f"attendance/{os.path.basename(latest_file)}"
     upload_to_s3(latest_file, bucket_name, s3_key)
 else:
-    print("No file downloaded to upload.")
+    print("No file to upload.")
