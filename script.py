@@ -13,9 +13,9 @@ import time
 download_dir = "C:\\temp"
 os.makedirs(download_dir, exist_ok=True)
 
-# Initialize WebDriver with headless settings (remove headless for debugging)
+# Initialize WebDriver with headless settings
 options = webdriver.ChromeOptions()
-# options.add_argument("--headless")  # Remove this line for debugging with a visible browser
+options.add_argument("--headless")
 options.add_argument("--no-sandbox")
 options.add_argument("--disable-dev-shm-usage")
 
@@ -94,7 +94,7 @@ except Exception as e:
     print("Failed to click the download button:", e)
 
 # Wait time to allow the file to download
-time.sleep(30)  # Increased sleep time to ensure download completion
+time.sleep(20)
 
 # Detect and convert file to CSV
 def convert_to_csv(file_path):
@@ -114,9 +114,7 @@ def convert_to_csv(file_path):
         return None
 
 # Get the latest downloaded file
-downloaded_files = [os.path.join(download_dir, f) for f in os.listdir(download_dir) if os.path.isfile(os.path.join(download_dir, f)) and f.endswith(('.xlsx', '.xls', '.csv', '.txt'))]
-print("Downloaded files:", downloaded_files)  # Debugging: check what files are being detected
-
+downloaded_files = [os.path.join(download_dir, f) for f in os.listdir(download_dir) if os.path.isfile(os.path.join(download_dir, f))]
 if downloaded_files:
     latest_file = max(downloaded_files, key=os.path.getctime)
     print(f"File downloaded: {latest_file}")
