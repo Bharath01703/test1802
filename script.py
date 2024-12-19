@@ -153,4 +153,3 @@ if latest_file:
     upload_to_s3(latest_file, bucket_name, s3_key)
 else:
     print("No file to upload.")
-#go
