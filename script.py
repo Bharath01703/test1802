@@ -10,19 +10,19 @@ from selenium.webdriver.support import expected_conditions as EC
 import time
 
 # Specify download directory
-download_dir = "C:\\temp"  # Use a standard directory for cloud-based environments
+download_dir = "C:\\temp"
 os.makedirs(download_dir, exist_ok=True)
 
-# Initialize WebDriver with headless settings (no local download)
+# Initialize WebDriver with headless settings
 options = webdriver.ChromeOptions()
-options.add_argument("--headless")  # Run headless to avoid GUI
+options.add_argument("--headless")
 options.add_argument("--no-sandbox")
 options.add_argument("--disable-dev-shm-usage")
 
-# Set download preferences for Chrome (to download directly to specified directory)
+# Set download preferences for Chrome
 prefs = {
-    "download.default_directory": download_dir,  # Specify the download folder
-    "download.prompt_for_download": False,  # Disable the prompt for file download
+    "download.default_directory": download_dir,
+    "download.prompt_for_download": False,
     "directory_upgrade": True
 }
 options.add_experimental_option("prefs", prefs)
@@ -53,6 +53,7 @@ current_url = driver.current_url
 if "login" in current_url:
     print("Redirected to login page again. Logging in again...")
     login()
+
 time.sleep(5)
 
 redirected_url = driver.current_url
@@ -92,7 +93,7 @@ try:
 except Exception as e:
     print("Failed to click the download button:", e)
 
-# Wait for file to download (20 seconds)
+# Wait time to allow the file to download
 time.sleep(20)
 
 # Detect and convert file to CSV
