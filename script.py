@@ -94,7 +94,25 @@ except Exception as e:
     print("Failed to click the download button:", e)
 
 # Wait time to allow the file to download
-time.sleep(40)
+def wait_for_download(download_dir, timeout=60):
+    initial_files = set(os.listdir(download_dir))
+    start_time = time.time()
+
+    while time.time() - start_time < timeout:
+        current_files = set(os.listdir(download_dir))
+        new_files = current_files - initial_files
+        if new_files:
+            return os.path.join(download_dir, new_files.pop())
+        time.sleep(2)  # Check every 2 seconds
+
+    return None  # Timeout exceeded
+
+latest_file = wait_for_download(download_dir)
+if latest_file:
+    print(f"File downloaded: {latest_file}")
+else:
+    print("No file downloaded.")
+    latest_file = None
 
 # Detect and convert file to CSV
 def convert_to_csv(file_path):
@@ -112,16 +130,9 @@ def convert_to_csv(file_path):
     except Exception as e:
         print(f"Failed to convert file to CSV: {e}")
         return None
-time.sleep(30)
-# Get the latest downloaded file
-downloaded_files = [os.path.join(download_dir, f) for f in os.listdir(download_dir) if os.path.isfile(os.path.join(download_dir, f))]
-if downloaded_files:
-    latest_file = max(downloaded_files, key=os.path.getctime)
-    print(f"File downloaded: {latest_file}")
+
+if latest_file:
     latest_file = convert_to_csv(latest_file)  # Convert the file to CSV
-else:
-    print("No file downloaded.")
-    latest_file = None
 
 driver.quit()
 
