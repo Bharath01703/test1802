@@ -1,8 +1,10 @@
 import os
-import requests
-import shutil
+import pandas as pd
+import boto3
+from io import BytesIO
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
@@ -11,12 +13,13 @@ import time
 download_dir = "C:\\temp"
 os.makedirs(download_dir, exist_ok=True)
 
-# Initialize WebDriver without headless mode (for debugging)
+# Initialize WebDriver with headless settings
 options = webdriver.ChromeOptions()
+options.add_argument("--headless")
 options.add_argument("--no-sandbox")
 options.add_argument("--disable-dev-shm-usage")
 
-# Set download preferences
+# Set download preferences for Chrome
 prefs = {
     "download.default_directory": download_dir,
     "download.prompt_for_download": False,
@@ -27,7 +30,6 @@ options.add_experimental_option("prefs", prefs)
 driver = webdriver.Chrome(options=options)
 driver.maximize_window()
 
-# Login Function
 def login():
     try:
         username_field = driver.find_element(By.XPATH, "//input[@placeholder='Username']")
@@ -42,75 +44,101 @@ def login():
         driver.quit()
         exit()
 
-# Navigate and Login
 driver.get("https://reports.bizom.in/users/login")
 login()
 
-# Go to Report Page
 driver.get("https://reports.bizom.in/reports/view/14085")
-if "login" in driver.current_url:
+
+current_url = driver.current_url
+if "login" in current_url:
     print("Redirected to login page again. Logging in again...")
     login()
 
-# Click Update and Download
+time.sleep(5)
+
+redirected_url = driver.current_url
+if redirected_url != "https://reports.bizom.in/reports/view/14085?url=reports/view/14085&access_token=Xed2cvyDvk3rwbFnJuqSs5VzSpERSnNUTXQThFIs":
+    driver.get("https://reports.bizom.in/reports/view/14085?url=reports/view/14085&access_token=Xed2cvyDvk3rwbFnJuqSs5VzSpERSnNUTXQThFIs")
+    time.sleep(3)
+
+# Clicking the Update Button
 try:
     update_button = WebDriverWait(driver, 10).until(
         EC.element_to_be_clickable((By.ID, "reportsUpdateButton"))
     )
     update_button.click()
     print("Update button clicked successfully!")
+except Exception as e:
+    print("Failed to click the Update button:", e)
 
+time.sleep(5)
+
+# Clicking the Download Dropdown
+try:
     dropdown = WebDriverWait(driver, 10).until(
         EC.element_to_be_clickable((By.ID, "option-dropdown"))
     )
     dropdown.click()
     print("Dropdown clicked successfully!")
+except Exception as e:
+    print("Failed to click the dropdown:", e)
 
+# Clicking the Download Button
+try:
     download_button = WebDriverWait(driver, 10).until(
         EC.element_to_be_clickable((By.ID, "downloadReportIcon"))
     )
     download_button.click()
     print("Download button clicked successfully!")
 except Exception as e:
-    print("Error during update or download process:", e)
+    print("Failed to click the download button:", e)
 
-# Wait for download
+# Wait time to allow the file to download
 time.sleep(20)
 
-# Check if file downloaded
-def check_download():
-    files = [os.path.join(download_dir, f) for f in os.listdir(download_dir) if os.path.isfile(os.path.join(download_dir, f))]
-    if files:
-        latest_file = max(files, key=os.path.getctime)
-        print(f"File downloaded: {latest_file}")
-        return latest_file
-    print("No file downloaded.")
-    return None
-
-downloaded_file = check_download()
-
-# Fallback Download with Requests (if URL known)
-def download_with_requests(url, save_path):
+# Detect and convert file to CSV
+def convert_to_csv(file_path):
     try:
-        response = requests.get(url, stream=True)
-        if response.status_code == 200:
-            with open(save_path, 'wb') as f:
-                shutil.copyfileobj(response.raw, f)
-            print(f"File downloaded using requests: {save_path}")
-            return save_path
+        if file_path.endswith((".xlsx", ".xls")):
+            df = pd.read_excel(file_path)
+        elif file_path.endswith((".txt", ".csv")):
+            df = pd.read_csv(file_path, sep=None, engine="python")
+        else:
+            raise ValueError("Unsupported file format.")
+        csv_file_path = file_path.rsplit(".", 1)[0] + ".csv"
+        df.to_csv(csv_file_path, index=False)
+        print(f"Converted to CSV: {csv_file_path}")
+        return csv_file_path
     except Exception as e:
-        print(f"Failed to download with requests: {e}")
-    return None
+        print(f"Failed to convert file to CSV: {e}")
+        return None
 
-# Replace `file_url` with the direct file link if identified
-file_url = None
-if not downloaded_file and file_url:
-    downloaded_file = download_with_requests(file_url, os.path.join(download_dir, "fallback_download.csv"))
+# Get the latest downloaded file
+downloaded_files = [os.path.join(download_dir, f) for f in os.listdir(download_dir) if os.path.isfile(os.path.join(download_dir, f))]
+if downloaded_files:
+    latest_file = max(downloaded_files, key=os.path.getctime)
+    print(f"File downloaded: {latest_file}")
+    latest_file = convert_to_csv(latest_file)  # Convert the file to CSV
+else:
+    print("No file downloaded.")
+    latest_file = None
 
 driver.quit()
 
-# Convert to CSV if needed (additional logic here)
-if downloaded_file:
-    print(f"Proceed with file: {downloaded_file}")
+# Upload to S3 Function
+def upload_to_s3(file_name, bucket_name, s3_key):
+    try:
+        s3 = boto3.client('s3', aws_access_key_id='AKIAZ3MGNBTBUTZ4UNEJ', aws_secret_access_key='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')
+        with open(file_name, 'rb') as file_data:
+            s3.upload_fileobj(file_data, bucket_name, s3_key)
+        print(f"File uploaded to S3 bucket '{bucket_name}' with key '{s3_key}'.")
+    except Exception as e:
+        print("Failed to upload to S3:", e)
+
+# Upload the converted file to S3
+bucket_name = "attendance3122024"
+if latest_file:
+    s3_key = f"attendance/{os.path.basename(latest_file)}"
+    upload_to_s3(latest_file, bucket_name, s3_key)
 else:
-    print("Download failed. No file to process.")
+    print("No file to upload.")
