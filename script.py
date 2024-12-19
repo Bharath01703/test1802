@@ -10,19 +10,19 @@ from selenium.webdriver.support import expected_conditions as EC
 import time
 
 # Specify download directory
-download_dir = "C:\\temp"
+download_dir = "/tmp"  # Use a standard directory for cloud-based environments
 os.makedirs(download_dir, exist_ok=True)
 
-# Initialize WebDriver with headless settings
+# Initialize WebDriver with headless settings (no local download)
 options = webdriver.ChromeOptions()
-options.add_argument("--headless")
+options.add_argument("--headless")  # Run headless to avoid GUI
 options.add_argument("--no-sandbox")
 options.add_argument("--disable-dev-shm-usage")
 
-# Set download preferences for Chrome
+# Set download preferences for Chrome (to download directly to specified directory)
 prefs = {
-    "download.default_directory": download_dir,
-    "download.prompt_for_download": False,
+    "download.default_directory": download_dir,  # Specify the download folder
+    "download.prompt_for_download": False,  # Disable the prompt for file download
     "directory_upgrade": True
 }
 options.add_experimental_option("prefs", prefs)
@@ -53,7 +53,6 @@ current_url = driver.current_url
 if "login" in current_url:
     print("Redirected to login page again. Logging in again...")
     login()
-
 time.sleep(5)
 
 redirected_url = driver.current_url
@@ -71,7 +70,7 @@ try:
 except Exception as e:
     print("Failed to click the Update button:", e)
 
-time.sleep(10)  # Increased wait time for report update to complete
+time.sleep(5)
 
 # Clicking the Download Dropdown
 try:
@@ -93,46 +92,37 @@ try:
 except Exception as e:
     print("Failed to click the download button:", e)
 
-# Wait time to allow the file to download
-def wait_for_download(download_dir, timeout=120):
-    initial_files = set(os.listdir(download_dir))
-    start_time = time.time()
+# Wait for file to download (20 seconds)
+time.sleep(20)
 
-    while time.time() - start_time < timeout:
-        current_files = set(os.listdir(download_dir))
-        new_files = current_files - initial_files
-        if new_files:
-            return os.path.join(download_dir, new_files.pop())
-        time.sleep(2)  # Check every 2 seconds
-
-    return None  # Timeout exceeded
-
-latest_file = wait_for_download(download_dir)
-if latest_file:
-    print(f"File downloaded: {latest_file}")
-else:
-    print("No file downloaded.")
-    latest_file = None
-
-# Detect and convert file to CSV
+# Check and convert downloaded file to CSV
 def convert_to_csv(file_path):
+    csv_file_path = file_path.rsplit('.', 1)[0] + '.csv'
     try:
-        if file_path.endswith((".xlsx", ".xls")):
+        # Handle Excel files
+        if file_path.endswith(".xlsx") or file_path.endswith(".xls"):
             df = pd.read_excel(file_path)
-        elif file_path.endswith((".txt", ".csv")):
-            df = pd.read_csv(file_path, sep=None, engine="python")
+        # Handle text files
+        elif file_path.endswith(".txt") or file_path.endswith(".csv"):
+            df = pd.read_csv(file_path, sep=None, engine='python')  # Auto-detect separator
         else:
-            raise ValueError("Unsupported file format.")
-        csv_file_path = file_path.rsplit(".", 1)[0] + ".csv"
-        df.to_csv(csv_file_path, index=False)
+            raise ValueError("Unsupported file format. Unable to convert.")
+        # Save as CSV
+        df.to_csv(csv_file_path, index=False, encoding='utf-8')
         print(f"Converted to CSV: {csv_file_path}")
         return csv_file_path
     except Exception as e:
         print(f"Failed to convert file to CSV: {e}")
         return None
 
-if latest_file:
-    latest_file = convert_to_csv(latest_file)  # Convert the file to CSV
+downloaded_files = [os.path.join(download_dir, f) for f in os.listdir(download_dir) if os.path.isfile(os.path.join(download_dir, f))]
+if downloaded_files:
+    latest_file = max(downloaded_files, key=os.path.getctime)
+    print(f"File downloaded: {latest_file}")
+    csv_file = convert_to_csv(latest_file)
+else:
+    print("No file downloaded.")
+    csv_file = None
 
 driver.quit()
 
@@ -146,10 +136,11 @@ def upload_to_s3(file_name, bucket_name, s3_key):
     except Exception as e:
         print("Failed to upload to S3:", e)
 
-# Upload the converted file to S3
+# Set S3 Bucket and Key
 bucket_name = "attendance3122024"
-if latest_file:
-    s3_key = f"attendance/{os.path.basename(latest_file)}"
-    upload_to_s3(latest_file, bucket_name, s3_key)
+
+if csv_file:
+    s3_key = f"attendance/{os.path.basename(csv_file)}"
+    upload_to_s3(csv_file, bucket_name, s3_key)
 else:
-    print("No file to upload.")
+    print("No file converted to CSV to upload.")
