@@ -12,17 +12,16 @@ import time
 # Specify download directory
 download_dir = "C:\\temp"
 os.makedirs(download_dir, exist_ok=True)
-
-# Initialize WebDriver with headless settings
+# Initialize WebDriver with headless settings (no local download)
 options = webdriver.ChromeOptions()
-options.add_argument("--headless")
+options.add_argument("--headless")  # Run headless to avoid GUI
 options.add_argument("--no-sandbox")
 options.add_argument("--disable-dev-shm-usage")
 
-# Set download preferences for Chrome
+# Set download preferences for Chrome (to download directly to specified directory)
 prefs = {
-    "download.default_directory": download_dir,
-    "download.prompt_for_download": False,
+    "download.default_directory": download_dir,  # Specify the download folder
+    "download.prompt_for_download": False,  # Disable the prompt for file download
     "directory_upgrade": True
 }
 options.add_experimental_option("prefs", prefs)
@@ -53,7 +52,6 @@ current_url = driver.current_url
 if "login" in current_url:
     print("Redirected to login page again. Logging in again...")
     login()
-
 time.sleep(5)
 
 redirected_url = driver.current_url
@@ -96,32 +94,27 @@ except Exception as e:
 # Wait time to allow the file to download
 time.sleep(20)
 
-# Detect and convert file to CSV
-def convert_to_csv(file_path):
-    try:
-        if file_path.endswith((".xlsx", ".xls")):
-            df = pd.read_excel(file_path)
-        elif file_path.endswith((".txt", ".csv")):
-            df = pd.read_csv(file_path, sep=None, engine="python")
-        else:
-            raise ValueError("Unsupported file format.")
-        csv_file_path = file_path.rsplit(".", 1)[0] + ".csv"
-        df.to_csv(csv_file_path, index=False)
-        print(f"Converted to CSV: {csv_file_path}")
-        return csv_file_path
-    except Exception as e:
-        print(f"Failed to convert file to CSV: {e}")
-        return None
-
-# Get the latest downloaded file
+# Check the downloaded file type
 downloaded_files = [os.path.join(download_dir, f) for f in os.listdir(download_dir) if os.path.isfile(os.path.join(download_dir, f))]
 if downloaded_files:
     latest_file = max(downloaded_files, key=os.path.getctime)
     print(f"File downloaded: {latest_file}")
-    latest_file = convert_to_csv(latest_file)  # Convert the file to CSV
+
+    # Convert file to CSV if it is Excel file
+    if latest_file.endswith(".xlsx") or latest_file.endswith(".xls"):
+        print("Converting Excel to CSV...")
+        try:
+            df = pd.read_excel(latest_file)
+            csv_file_path = latest_file.replace('.xlsx', '.csv').replace('.xls', '.csv')
+            df.to_csv(csv_file_path, index=False)
+            print(f"Converted to CSV: {csv_file_path}")
+            latest_file = csv_file_path  # Update to the new CSV file path
+        except Exception as e:
+            print(f"Failed to convert Excel to CSV: {e}")
+    else:
+        print("File is not an Excel file. No conversion applied.")
 else:
     print("No file downloaded.")
-    latest_file = None
 
 driver.quit()
 
@@ -135,10 +128,20 @@ def upload_to_s3(file_name, bucket_name, s3_key):
     except Exception as e:
         print("Failed to upload to S3:", e)
 
-# Upload the converted file to S3
+# Function to get the latest downloaded file
+def get_latest_file(directory):
+    files = [os.path.join(directory, f) for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
+    if not files:
+        return None
+    latest_file = max(files, key=os.path.getctime)
+    return latest_file
+
+# Set S3 Bucket and Key
 bucket_name = "attendance3122024"
+latest_file = get_latest_file(download_dir)
+
 if latest_file:
     s3_key = f"attendance/{os.path.basename(latest_file)}"
     upload_to_s3(latest_file, bucket_name, s3_key)
 else:
-    print("No file to upload.")
+    print("No file downloaded to upload.") 
