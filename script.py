@@ -71,7 +71,7 @@ try:
 except Exception as e:
     print("Failed to click the Update button:", e)
 
-time.sleep(5)
+time.sleep(10)  # Increased wait time for report update to complete
 
 # Clicking the Download Dropdown
 try:
@@ -94,7 +94,7 @@ except Exception as e:
     print("Failed to click the download button:", e)
 
 # Wait time to allow the file to download
-def wait_for_download(download_dir, timeout=60):
+def wait_for_download(download_dir, timeout=120):
     initial_files = set(os.listdir(download_dir))
     start_time = time.time()
 
@@ -153,3 +153,4 @@ if latest_file:
     upload_to_s3(latest_file, bucket_name, s3_key)
 else:
     print("No file to upload.")
+#go
