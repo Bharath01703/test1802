@@ -23,10 +23,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install pandas boto3 selenium
 
-    - name: Run script.py
-      run: |
-        python script.py  # Run your first Python script
-
     - name: Run script02.py
       run: |
         python script02.py  # Run your second Python script
