@@ -51,6 +51,17 @@ login()
 driver.get("https://swastiksmasala.bizom.in/users/ajaxuserindex")
 time.sleep(5)
 
+# Clicking the All User Button
+try:
+    download_button = WebDriverWait(driver, 10).until(
+        EC.element_to_be_clickable((By.ID, "allusersid"))
+    )
+    download_button.click()
+    print("All User button clicked successfully!")
+except Exception as e:
+    print("Failed to click the download button:", e)
+time.sleep(2)
+
 # Clicking the Download Button
 try:
     download_button = WebDriverWait(driver, 10).until(
