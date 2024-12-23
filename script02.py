@@ -10,7 +10,7 @@ from selenium.webdriver.support import expected_conditions as EC
 import time
 
 # Specify download directory
-download_dir = "C:\\temp"
+download_dir = "/tmp"
 os.makedirs(download_dir, exist_ok=True)
 
 # Initialize WebDriver with headless settings
