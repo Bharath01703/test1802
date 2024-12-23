@@ -25,5 +25,9 @@ jobs:
 
     - name: Run script02.py
       run: |
+        python script.py  # Run your second Python script
+        
+    - name: Run script02.py
+      run: |
         python script02.py  # Run your second Python script
 
